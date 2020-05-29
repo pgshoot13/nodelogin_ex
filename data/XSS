@@ -1,0 +1,6 @@
+//html entities
+
+&lt;script&gt;
+alert('merong');
+location.href='https://www.naver.com';
+&lt;/script&gt;

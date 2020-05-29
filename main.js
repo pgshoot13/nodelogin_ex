@@ -4,6 +4,8 @@ var url = require('url');
 var qs = require('querystring');
 
 var template = require('./lib/template.js');
+var path = require('path');
+var sanitizeHtml = require('sanitize-html');
 
 function templateHTML(title, list, body, control){
     return `
@@ -62,16 +64,21 @@ var app = http.createServer(function(request,response){
             });
         } else {
             fs.readdir('./data', function(error, filelist){ //find data dir
-                fs.readFile(`data/${queryData.id}`, 'utf8', function(err,description){
+                var filteredId = path.parse(queryData.id).base; //hide file path
+                fs.readFile(`data/${filteredId}`, 'utf8', function(err,description){
 
                     var title = queryData.id;   //3000/?id=HTML
+                    var sanitizedTitle = sanitizeHtml(title);   //sanitizedTitles hide <script> tag
+                    var sanitizedDescription = sanitizeHtml(description, {
+                        allowedTags:['h1']
+                    });
                     var list = template.list(filelist);
-                    var body = `<h2>${title}</h2>${description}`;
+                    var body = `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`;
                     var control = 
                     `<a href="/create">create</a> 
-                     <a href="/update?id=${title}">update</a>
+                     <a href="/update?id=${sanitizedTitle}">update</a>
                      <form action="delete_process" method="post">
-                        <input type="hidden" name="id" value="${title}">
+                        <input type="hidden" name="id" value="${sanitizedTitle}">
                         <input type="submit" value="delete">
                     </form>
                     `;
@@ -121,7 +128,8 @@ var app = http.createServer(function(request,response){
         });
     } else if(pathname == '/update'){
         fs.readdir('./data', function(error, filelist){ //find data dir
-            fs.readFile(`data/${queryData.id}`, 'utf8', function(err,description){
+            var filteredId = path.parse(queryData.id).base; //hide file path
+            fs.readFile(`data/${filteredId}`, 'utf8', function(err,description){
 
                 var title = queryData.id;   //3000/?id=HTML
                 var list = template.list(filelist);
